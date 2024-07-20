@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using UnityEngine;
@@ -9,6 +9,8 @@ namespace ProceduralDungeonGeneration
 {
     public class Generator : MonoBehaviour
     {
+
+
         public BaseRoom[] rooms;
         public int roomAmount;
         public int corridorLength = 0;
