@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-namespace MyGraph
+namespace ProceduralDungeonGeneration
 {
     public class Edge : ScriptableObject
     {

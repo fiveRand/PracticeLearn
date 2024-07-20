@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 
-namespace MyGraph
+namespace ProceduralDungeonGeneration
 {
     public class Node : ScriptableObject
     {

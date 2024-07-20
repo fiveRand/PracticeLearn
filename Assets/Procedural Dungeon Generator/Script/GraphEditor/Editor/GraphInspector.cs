@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 
-namespace MyGraph
+namespace ProceduralDungeonGeneration
 {
     [CustomEditor(typeof(LevelGraphData))]
     public class GraphInspector : Editor

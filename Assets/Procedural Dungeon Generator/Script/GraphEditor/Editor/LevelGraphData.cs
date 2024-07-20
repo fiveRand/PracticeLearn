@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace MyGraph
+namespace ProceduralDungeonGeneration
 {
     [CreateAssetMenu(fileName = "LevelGraph", menuName = "Level graph")]
     public class LevelGraphData : ScriptableObject

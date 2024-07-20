@@ -11,7 +11,7 @@ using System.Linq;
 using UnityEditor;
 #endif
 
-namespace MyGraph
+namespace ProceduralDungeonGeneration
 {
     public class GraphEditorWindow : EditorWindow
     {
