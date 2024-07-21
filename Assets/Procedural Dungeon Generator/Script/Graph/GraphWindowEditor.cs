@@ -3,6 +3,10 @@ using System.Collections.Generic;
 using UnityEngine;
 using Edgar.Legacy.Utils;
 using System.Linq;
+using Edgar.Graphs;
+using Edgar.Unity.Diagnostics;
+
+
 
 
 
@@ -12,7 +16,7 @@ using UnityEditor;
 
 namespace ProceduralDungeonGeneration
 {
-    public class GraphEditorWindow : EditorWindow
+    public class GraphWindowEditor : EditorWindow
     {
         public enum Status
         {
@@ -22,15 +26,16 @@ namespace ProceduralDungeonGeneration
             Transitioning
         }
         Status status;
+        Node spawnNode = null;
+        Node exitNode = null;
         List<Node> nodes = new List<Node>();
-        List<Edge> edges = new List<Edge>();
         Vector2 panOffset = Vector2.zero;
         float zoom = 1;
         Node selectedNode;
 
         Vector2 mousePosition;
 
-        LevelGraphData data;
+        LevelGraphData script;
 
         /*
         [MenuItem("Window/Node editor")]
@@ -42,17 +47,31 @@ namespace ProceduralDungeonGeneration
 
         public void OnEnable()
         {
-            if(data != null)
+            if(script != null)
             {
-                Initialize(data);
+                Initialize(script);
             }
+        }
+        void OnGUI()
+        {
+            // Debug.Log(status);
+            Inputs();
+            Draws();
+
+            // DrawGrid(16, 0.2f, Color.gray);
+            // DrawGrid(16 * 5, 0.4f, Color.gray);
+        }
+
+        public void Clear()
+        {
+            nodes.Clear();
+
         }
 
         public void Initialize(LevelGraphData data)
         {
-            this.data = data;
+            this.script = data;
             nodes = new List<Node>(data.nodes);
-            edges = new List<Edge>(data.edges);
 
             zoom = data.zoom;
             panOffset = data.panOffset;
@@ -68,30 +87,31 @@ namespace ProceduralDungeonGeneration
 
         void Save()
         {
-
+            
             foreach (var node in nodes)
             {
-                if(!AssetDatabase.Contains(node.GetInstanceID()))
+                AssetDatabase.RemoveObjectFromAsset(node);
+                if (!AssetDatabase.Contains(node.GetInstanceID()))
                 {
-                    AssetDatabase.AddObjectToAsset(node, data);
-                    data.nodes.Add(node);
+                    AssetDatabase.AddObjectToAsset(node, script);
                 }
             }
+            var path = AssetDatabase.GetAssetPath(script);
+            DO NOT USE SUBASSET! ADD CONTAINER FOR Asset!
+            var subAssets = AssetDatabase.LoadAllAssetRepresentationsAtPath(path);
 
-            foreach(var edge in edges)
+            Debug.Log(subAssets.Length);
+            script.nodes.Clear();
+            foreach(var sub in subAssets)
             {
-                if (!AssetDatabase.Contains(edge.GetInstanceID()))
-                {
-                    AssetDatabase.AddObjectToAsset(edge, data);
-                    data.edges.Add(edge);
-                }
+                ScriptableObject node = (ScriptableObject)sub;
+                Debug.Log(node != null);
+
             }
-
-
         
 
-            data.panOffset = panOffset;
-            data.zoom = zoom;
+            script.panOffset = panOffset;
+            script.zoom = zoom;
             // EditorUtility.SetDirty(data);
             AssetDatabase.SaveAssets();
         }
@@ -107,23 +127,30 @@ namespace ProceduralDungeonGeneration
             path = TrimPathForAssetDataBase(path) + "/LevelGraphdata.asset";
             path = AssetDatabase.GenerateUniqueAssetPath(path);
 
-            data = ScriptableObject.CreateInstance<LevelGraphData>();
+            script = ScriptableObject.CreateInstance<LevelGraphData>();
 
-            AssetDatabase.CreateAsset(data, path);
+            AssetDatabase.CreateAsset(script, path);
 
             foreach (var node in nodes)
             {
                 var temp = Instantiate<Node>(node);
-                AssetDatabase.AddObjectToAsset(temp, data);
-
-                data.nodes.Add(temp);
+                AssetDatabase.AddObjectToAsset(temp, script);
+                if(node.type == Node.Type.Exit)
+                {
+                    script.exitNode = temp;
+                }
+                else if(node.type == Node.Type.Spawn)
+                {
+                    script.spawnNode = temp;
+                }
+                script.nodes.Add(temp);
             }
-            data.zoom = zoom;
-            data.panOffset = panOffset;
+            script.zoom = zoom;
+            script.panOffset = panOffset;
 
             AssetDatabase.SaveAssets();
             EditorUtility.FocusProjectWindow();
-            Selection.activeObject = data;
+            Selection.activeObject = script;
 
         }
 
@@ -137,37 +164,31 @@ namespace ProceduralDungeonGeneration
                 return;
             }
             path = TrimPathForAssetDataBase(path);
-            data = (LevelGraphData)AssetDatabase.LoadAssetAtPath(path, typeof(LevelGraphData));
-            zoom = data.zoom;
-            panOffset = data.panOffset;
-            nodes = data.nodes;
-            edges = data.edges;
+            script = (LevelGraphData)AssetDatabase.LoadAssetAtPath(path, typeof(LevelGraphData));
+            zoom = script.zoom;
+            panOffset = script.panOffset;
+            spawnNode = script.spawnNode;
+            exitNode = script.exitNode;
+            nodes = script.nodes;
+
             EditorUtility.FocusProjectWindow();
-            Selection.activeObject = data;
-        }
-
-        void OnGUI()
-        {
-            // Debug.Log(status);
-            Inputs();
-            Draws();
-
-            // DrawGrid(16, 0.2f, Color.gray);
-            // DrawGrid(16 * 5, 0.4f, Color.gray);
+            Selection.activeObject = script;
         }
 
         void Draws()
         {
-            foreach (Edge e in edges)
-            {
-                Rect start = e.start.GetRect(panOffset, zoom);
-                Rect end = e.end.GetRect(panOffset, zoom);
-                VisualizeConnection(start, end);
-            }
-            
             for (int i = 0; i < nodes.Count; i++)
             {
-                nodes[i].Draw(panOffset, zoom);
+                var node = nodes[i];
+                node.Draw(panOffset, zoom);
+
+                foreach(var other in node.edges)
+                {
+                    Rect start = node.GetRect(panOffset, zoom);
+                    Rect end = other.GetRect(panOffset, zoom);
+
+                    VisualizeConnection(start, end);
+                }
             }
         }
 
@@ -278,6 +299,8 @@ namespace ProceduralDungeonGeneration
             int selectedNodeIndex = GetNodeFromMousePosition();
             Event curEvent = Event.current;
 
+
+
             if (curEvent.button == 0)
             {
                 if (status == Status.Normal)
@@ -294,14 +317,7 @@ namespace ProceduralDungeonGeneration
                 }
                 else if (status == Status.Transitioning)
                 {
-                    Edge newEdge = CreateInstance<Edge>();
-                    {
-                        newEdge.start = selectedNode;
-                        newEdge.end = nodes[selectedNodeIndex];
-                    }
-
-                    edges.Add(newEdge);
-
+                    script.AddUndirectedEdge(selectedNode, nodes[selectedNodeIndex]);
                     status = Status.Normal;
                     selectedNode = null;
                 }
@@ -314,9 +330,9 @@ namespace ProceduralDungeonGeneration
                     GenericMenu menu = new GenericMenu();
                     if (selectedNodeIndex == -1)
                     {
-                        menu.AddItem(new GUIContent("Room/Start"), false, RoomCallBack, "Start");
-                        menu.AddItem(new GUIContent("Room/Normal"), false, RoomCallBack, "Normal");
-                        menu.AddItem(new GUIContent("Room/End"), false, RoomCallBack, "End");
+                        menu.AddItem(new GUIContent("Room/" + Node.Type.Spawn.ToString()), false, RoomCallBack, Node.Type.Spawn);
+                        menu.AddItem(new GUIContent("Room/" + Node.Type.None.ToString()), false, RoomCallBack, Node.Type.None);
+                        menu.AddItem(new GUIContent("Room/" + Node.Type.Exit.ToString()), false, RoomCallBack, Node.Type.Exit);
                         menu.AddSeparator("");
                         menu.AddItem(new GUIContent("Save"), false, WindowCallBack, "Save");
                         menu.AddItem(new GUIContent("SaveAs"), false, WindowCallBack, "SaveAs");
@@ -332,29 +348,47 @@ namespace ProceduralDungeonGeneration
                     menu.ShowAsContext();
                     curEvent.Use();
                 }
+                else if(status == Status.Transitioning)
+                {
+                    status = Status.Normal;
+                }
             }
         }
 
         void RoomCallBack(object callback)
         {
-            string name = callback.ToString();
+            Node.Type type = (Node.Type)callback;
 
+            var newnode = CreateNode(type);
+
+            if(type == Node.Type.Spawn)
+            {
+                if(spawnNode!=null)
+                {
+                    spawnNode.type = Node.Type.None;
+                }
+                spawnNode = newnode;
+            }
+            else if(type == Node.Type.Exit )
+            {
+                if (exitNode != null)
+                {
+                    exitNode.type = Node.Type.None;
+                }
+
+                exitNode = newnode;
+            }
+            nodes.Add(newnode);
+
+        }
+
+        Node CreateNode(Node.Type type)
+        {
             Vector2 roomPosition = WorldToGridPosition(mousePosition);
             Node newNode = CreateInstance<Node>();
             newNode.position = roomPosition;
-            switch (name)
-            {
-                case "Start":
-
-                    break;
-                    case "End":
-
-                    break;
-                    case "Normal":
-
-                    break;
-            }
-            nodes.Add(newNode);
+            newNode.type = type;
+            return newNode;
         }
 
         /// <summary>
@@ -396,22 +430,13 @@ namespace ProceduralDungeonGeneration
                     {
                         return;
                     }
-                    Node node = nodes[index];
-                    nodes.RemoveAt(index);
-                    Queue<Edge> willbeDeletedEdge = new Queue<Edge>();
-                    foreach (Edge e in edges)
+                    selectedNode = nodes[index];
+                    foreach(var node in nodes)
                     {
-                        if (e.start == node || e.end == node)
-                        {
-                            willbeDeletedEdge.Enqueue(e);
-                        }
+                        node.edges.Remove(selectedNode);
+                        selectedNode.edges.Remove(node);
                     }
-
-                    while (willbeDeletedEdge.Count > 0)
-                    {
-                        var edge = willbeDeletedEdge.Dequeue();
-                        edges.Remove(edge);
-                    }
+                    nodes.Remove(selectedNode);
 
                     break;
                 case "Transition":
@@ -430,6 +455,7 @@ namespace ProceduralDungeonGeneration
         {
 
             int selectedIndex = -1;
+
             for (int i = 0; i < nodes.Count; i++)
             {
                 Rect nodeRect = nodes[i].GetRect(panOffset, zoom);

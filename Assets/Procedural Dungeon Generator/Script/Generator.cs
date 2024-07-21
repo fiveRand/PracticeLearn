@@ -1,9 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Tilemaps;
-using ProceduralDungeonGeneration;
+
 
 namespace ProceduralDungeonGeneration
 {
@@ -17,18 +18,80 @@ namespace ProceduralDungeonGeneration
 
         public Tilemap wallTilemap;
         public Tilemap groundTilemap;
-        public Tile testTile;
-        public BaseRoom a;
-        public BaseRoom b;
+        public RectInt boundary;
+        public Dictionary<Node, BaseRoom> nodeRoom;
 
         /// <summary>
         /// https://gamedev.stackexchange.com/questions/150917/how-to-get-all-tiles-from-a-tilemap
         /// </summary>
         /// 
+
+        private void OnDrawGizmos() {
+
+            var vertices = QuickMethod.RectangleVertices(new Vector3Int(boundary.min.x,boundary.min.y,0), new Vector3Int(boundary.max.x, boundary.max.y, 0));
+            Handles.DrawSolidRectangleWithOutline(vertices, Color.clear, Color.red);
+        }
         public void Test()
         {
-            CreateRoom(a);
+            nodeRoom = new Dictionary<Node, BaseRoom>(graphData.nodes.Count);
+            Node startNode = graphData.spawnNode;
+            Queue<Node> q = new Queue<Node>();
+            HashSet<Node> spawned = new HashSet<Node>();
+            q.Enqueue(startNode);
+            spawned.Add(startNode);
+            var startRoom = QuickMethod.GetRandom(rooms);
+            startRoom= Instantiate(startRoom, Vector3.zero, Quaternion.identity, transform);
+            nodeRoom[startNode] = startRoom;
+            boundary = startRoom.collisionRect;
+
+            int failsafe = 0;
+            while(q.Count > 0)
+            {
+                failsafe++;
+                if(failsafe > 100)
+                {
+                    Debug.LogError("OVERLOAD");
+                    break;
+                }
+                var curNode = q.Dequeue();
+                foreach(var neighbor in curNode.edges)
+                {
+                    Vector2 direction = QuickMethod.RandomDirection();
+                    if(spawned.Contains(neighbor))
+                    {
+                        continue; 
+                    }
+                    var room = QuickMethod.GetRandom(rooms);
+
+                    Vector2 pos = SetRoomPosition2AnchorBottomRight(boundary, room.collisionRect, direction);
+                    room = Instantiate(room, pos, Quaternion.identity, transform);
+                    room.ResetCollisionRect();
+                    boundary = UpdateRect(boundary,room.collisionRect);
+                    spawned.Add(neighbor);
+                    q.Enqueue(neighbor);
+
+                }
+            }
+
         }
+
+        RectInt UpdateRect(RectInt rect,RectInt otherRect)
+        {
+            RectInt newRect = new RectInt();
+            int xMin = Mathf.Min(rect.xMin, otherRect.xMin);
+            int xMax = Mathf.Max(rect.xMax, otherRect.xMax);
+            int yMin = Mathf.Min(rect.yMin, otherRect.yMin);
+            int yMax = Mathf.Max(rect.yMax, otherRect.yMax);
+
+            newRect.xMin = xMin;
+            newRect.xMax = xMax;
+            newRect.yMin = yMin;
+            newRect.yMax = yMax;
+            return newRect;
+
+        }
+
+        
 
         void GenerateCorridor(BaseRoom startRoom, BaseRoom endRoom, Door2D startDoor, Door2D endDoor)
         {
@@ -244,6 +307,31 @@ namespace ProceduralDungeonGeneration
             {
                 offset.y -= connectingRoom.collisionRect.height;
             }
+            return offset;
+        }
+
+        Vector2Int SetRoomPosition2AnchorBottomRight(RectInt placedRoom, RectInt connectingRoom,Vector2 direction)
+        {
+            var offset = placedRoom.position - connectingRoom.position;
+
+            if(direction.x > 0)
+            {
+                offset.x += placedRoom.width;
+            }
+            else
+            {
+                offset.x -= connectingRoom.width;
+            }
+
+            if(direction.y > 0)
+            {
+                offset.y += placedRoom.height;
+            }
+            else
+            {
+                offset.y -= connectingRoom.height;
+            }
+
             return offset;
         }
 

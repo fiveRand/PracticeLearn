@@ -5,8 +5,17 @@ using UnityEditor;
 
 namespace ProceduralDungeonGeneration
 {
+    [System.Serializable]
     public class Node : ScriptableObject
     {
+        public enum Type
+        {
+            None,
+            Spawn,
+            Exit,
+        }
+        public List<Node> edges = new List<Node>();
+        public Type type;
         public Vector2 position;
         public string title;
 
@@ -43,13 +52,8 @@ namespace ProceduralDungeonGeneration
 
             var rect = GetRect(gridOffset, zoom);
 
-            //   var rectStyle = new GUIStyle(LevelGraphEditorStyles.RoomControl);
-            //   rectStyle.fontSize = (int)(rectStyle.fontSize * zoom);
-            //  rectStyle.normal.textColor = style.TextColor;
-
             var oldBackgroundColor = GUI.backgroundColor;
-            // GUI.backgroundColor = style.BackgroundColor;
-            GUI.Box(rect, "Room");
+            GUI.Box(rect, type.ToString());
             GUI.backgroundColor = oldBackgroundColor;
         }
     }
