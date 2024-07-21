@@ -1,7 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using PlasticGui.WorkspaceWindow.Items;
 using Edgar.Legacy.Utils;
 using System.Linq;
 

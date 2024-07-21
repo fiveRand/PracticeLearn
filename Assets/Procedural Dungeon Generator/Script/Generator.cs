@@ -3,14 +3,13 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using UnityEngine;
 using UnityEngine.Tilemaps;
-
+using ProceduralDungeonGeneration;
 
 namespace ProceduralDungeonGeneration
 {
     public class Generator : MonoBehaviour
     {
-
-
+        public LevelGraphData graphData;
         public BaseRoom[] rooms;
         public int roomAmount;
         public int corridorLength = 0;
