@@ -73,8 +73,11 @@ namespace ProceduralDungeonGeneration
             this.script = data;
             nodes = new List<Node>(data.nodes);
 
-            zoom = data.zoom;
-            panOffset = data.panOffset;
+            zoom = script.zoom;
+            panOffset = script.panOffset;
+            spawnNode = script.spawnNode;
+            exitNode = script.exitNode;
+            nodes = script.nodes;
         }
 
         string TrimPathForAssetDataBase(string folderPath)
@@ -97,20 +100,11 @@ namespace ProceduralDungeonGeneration
 
         void Save()
         {
-            var path = AssetDatabase.GetAssetPath(script);
 
-            path = TrimSlash(path);
-            for(int i =0; i < nodes.Count; i++)
-            {
-                var node = nodes[i];
-
-                AssetDatabase.CreateAsset(node, path+".assets");
-            }
-
-        
 
             script.panOffset = panOffset;
             script.zoom = zoom;
+
             // EditorUtility.SetDirty(data);
             AssetDatabase.SaveAssets();
         }
@@ -173,6 +167,8 @@ namespace ProceduralDungeonGeneration
             EditorUtility.FocusProjectWindow();
             Selection.activeObject = script;
         }
+
+
 
         void Draws()
         {
@@ -377,6 +373,7 @@ namespace ProceduralDungeonGeneration
 
                 exitNode = newnode;
             }
+            
             nodes.Add(newnode);
 
         }
@@ -384,9 +381,40 @@ namespace ProceduralDungeonGeneration
         Node CreateNode(Node.Type type)
         {
             Vector2 roomPosition = WorldToGridPosition(mousePosition);
+
+            var path = AssetDatabase.GetAssetPath(script);
+            var folderPath = TrimSlash(path);
+
+            // bool isAssetExist = AssetDatabase.GetMainAssetTypeAtPath(script.nodesFolderPath) != null;
+
+            if (!AssetDatabase.IsValidFolder(script.nodesFolderPath))
+            {
+                folderPath = AssetDatabase.CreateFolder(folderPath, script.name + "'s nodes");
+                // it return GUID!
+                folderPath = AssetDatabase.GUIDToAssetPath(folderPath);
+                script.nodesFolderPath = folderPath;
+            }
+            else
+            {
+                folderPath = script.nodesFolderPath;
+            }
+
+
             Node newNode = CreateInstance<Node>();
             newNode.position = roomPosition;
             newNode.type = type;
+            var nodePath = $"{folderPath}/{newNode.type.ToString()}.asset";
+            var uniquePath = AssetDatabase.GenerateUniqueAssetPath(nodePath);
+            AssetDatabase.CreateAsset(newNode, uniquePath);
+
+            if (newNode.type == Node.Type.Spawn)
+            {
+                script.spawnNode = newNode;
+            }
+            else if (newNode.type == Node.Type.Exit)
+            {
+                script.exitNode = newNode;
+            }
             return newNode;
         }
 
@@ -436,7 +464,7 @@ namespace ProceduralDungeonGeneration
                         selectedNode.edges.Remove(node);
                     }
                     nodes.Remove(selectedNode);
-
+                    AssetDatabase.DeleteAsset(AssetDatabase.GetAssetPath(selectedNode));
                     break;
                 case "Transition":
 

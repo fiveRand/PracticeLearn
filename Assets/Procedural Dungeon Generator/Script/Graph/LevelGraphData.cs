@@ -13,6 +13,7 @@ namespace ProceduralDungeonGeneration
         public Vector2 panOffset = Vector2.zero;
         public float zoom = 1;
         public static bool HasChanged { get; set; }
+        public string nodesFolderPath;
 
 
         public void AddDirectedEdge(Node from,Node to)

@@ -410,7 +410,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 592b30f911c5dc44cac78ed00fb47ccf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  graphData: {fileID: 0}
+  graphData: {fileID: 11400000, guid: 0fbafd5012eaef344971e8162498d361, type: 2}
   rooms:
   - {fileID: 9203647726274633781, guid: a3f6b9bee7c5e474493559261f6bd93e, type: 3}
   - {fileID: 6942540697384696816, guid: a33bd9936d13ca0439fee8e0c99a5ecc, type: 3}

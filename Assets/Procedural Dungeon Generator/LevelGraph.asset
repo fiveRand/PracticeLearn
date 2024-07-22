@@ -1,21 +1,5 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-4942154701024245673
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 87caf0ca17ad8394195bd7c463f6993d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  edges: []
-  type: 1
-  position: {x: 266, y: 147}
-  title: 
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -28,24 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 72526294e125a1146924caef2e2f882a, type: 3}
   m_Name: LevelGraph
   m_EditorClassIdentifier: 
-  spawnNode: {fileID: 0}
-  exitNode: {fileID: 0}
-  nodes: []
+  spawnNode: {fileID: 11400000, guid: 8e36beb7372263646a784287f0817574, type: 2}
+  exitNode: {fileID: 11400000, guid: 7e2e93d6e99523a40a780800f5a2868c, type: 2}
+  nodes:
+  - {fileID: 11400000, guid: 8e36beb7372263646a784287f0817574, type: 2}
+  - {fileID: 11400000, guid: f590892ab74730041a7cb8a2697af9a9, type: 2}
+  - {fileID: 11400000, guid: 7e2e93d6e99523a40a780800f5a2868c, type: 2}
   panOffset: {x: 0, y: 0}
   zoom: 1
---- !u!114 &4214006199019184836
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 87caf0ca17ad8394195bd7c463f6993d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  edges: []
-  type: 0
-  position: {x: 227, y: 105}
-  title: 
+  nodesFolderPath: Assets/Procedural Dungeon Generator/LevelGraph's nodes
